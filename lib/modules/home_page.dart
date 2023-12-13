@@ -1,9 +1,8 @@
-// ignore_for_file: library_prefixes
-
 import 'package:flutter/material.dart';
-import 'package:flutter_realm/models/schema.dart' as Schema;
-import 'package:flutter_realm/widgets/main_textfield_widget.dart';
-import 'package:realm/realm.dart';
+import 'package:flutter_offline_mode/graphql/queries.dart';
+import 'package:flutter_offline_mode/widgets/main_textfield_widget.dart';
+import 'package:graphql_flutter/graphql_flutter.dart';
+import 'package:flutter_offline_mode/models/models_export.dart' as models;
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -14,20 +13,15 @@ class HomePage extends StatefulWidget {
 
 class _HomePageState extends State<HomePage> {
   final _formKey = GlobalKey<FormState>();
-  final config = Configuration.local([Schema.Links.schema, Schema.User.schema]);
-  late Realm realm;
-
-  RealmResults<Schema.Links>? links;
 
   late TextEditingController titleController;
   late TextEditingController addressController;
 
+  GraphQLClient? client;
+
   @override
   void initState() {
     super.initState();
-
-    realm = Realm(config);
-    queryObject();
 
     titleController = TextEditingController();
     addressController = TextEditingController();
@@ -37,46 +31,8 @@ class _HomePageState extends State<HomePage> {
   void dispose() {
     super.dispose();
 
-    realm.close();
     titleController.dispose();
     addressController.dispose();
-  }
-
-  void addObject() {
-    if (!_formKey.currentState!.validate()) return;
-
-    final link = Schema.Links(
-      ObjectId.fromTimestamp(DateTime.now()),
-      title: titleController.text,
-      address: addressController.text,
-      user: Schema.User(
-        id: "1",
-        name: "daffa",
-      )
-    );
-
-    realm.write(() {
-      realm.add(link);
-    });
-
-    titleController.clear();
-    addressController.clear();
-
-    queryObject();
-  }
-
-  void updateObject(Schema.Links link) {}
-
-  void queryObject() {
-    setState(() {
-      links = realm.all<Schema.Links>();
-    });
-  }
-
-  void deleteCar(Schema.Links car) {
-    realm.write(() {
-      realm.delete(car);
-    });
   }
 
   @override
@@ -115,7 +71,7 @@ class _HomePageState extends State<HomePage> {
                     SizedBox(
                       width: double.infinity,
                       child: ElevatedButton(
-                        onPressed: addObject,
+                        onPressed: () {},
                         child: const Text("Add"),
                       ),
                     ),
@@ -125,54 +81,80 @@ class _HomePageState extends State<HomePage> {
               const SizedBox(
                 height: 20,
               ),
-              ListView.builder(
-                shrinkWrap: true,
-                physics: const NeverScrollableScrollPhysics(),
-                itemCount: links?.length ?? 0,
-                itemBuilder: (context, index) {
-                  final link = links?[index];
+              Expanded(
+                child: Query(
+                  options: QueryOptions(
+                    document: gql(
+                      Queries.fetchAllLinks,
+                    ), // this is the query string you just created
+                    pollInterval: null,
+                  ),
+                  builder: (result, {fetchMore, refetch}) {
+                    if (result.hasException) {
+                      return Text(result.exception.toString());
+                    }
 
-                  return Padding(
-                    padding: const EdgeInsets.only(bottom: 16),
-                    child: Row(
-                      children: [
-                        Expanded(
-                          child: Text(
-                            "Id : ${link?.id}",
-                            style: Theme.of(context).textTheme.bodyMedium,
+                    if (result.isLoading) {
+                      return const Text('Loading');
+                    }
+
+                    final links = result.data?["links"];
+
+                    if (links == null) {
+                      return const Text('No Links');
+                    }
+
+                    return ListView.builder(
+                      // shrinkWrap: true,
+                      // physics: const NeverScrollableScrollPhysics(),
+                      itemCount: links.length,
+                      itemBuilder: (context, index) {
+                        final link = models.Link.fromJson(links[index]);
+
+                        return Padding(
+                          padding: const EdgeInsets.only(bottom: 16),
+                          child: Row(
+                            children: [
+                              Expanded(
+                                child: Text(
+                                  "Id : ${link.id}",
+                                  style: Theme.of(context).textTheme.bodyMedium,
+                                ),
+                              ),
+                              const SizedBox(
+                                width: 5,
+                              ),
+                              Expanded(
+                                child: Text(
+                                  "Title : ${link.title}",
+                                  style: Theme.of(context).textTheme.bodyMedium,
+                                ),
+                              ),
+                              const SizedBox(
+                                width: 5,
+                              ),
+                              Expanded(
+                                child: Text(
+                                  "Address : ${link.address}",
+                                  style: Theme.of(context).textTheme.bodyMedium,
+                                ),
+                              ),
+                              const SizedBox(
+                                width: 5,
+                              ),
+                              Expanded(
+                                child: Text(
+                                  "User name : ${link.user?.name}",
+                                  style: Theme.of(context).textTheme.bodyMedium,
+                                ),
+                              ),
+                            ],
                           ),
-                        ),
-                        const SizedBox(
-                          width: 5,
-                        ),
-                        Expanded(
-                          child: Text(
-                            "Title : ${link?.title}",
-                            style: Theme.of(context).textTheme.bodyMedium,
-                          ),
-                        ),
-                        const SizedBox(
-                          width: 5,
-                        ),
-                        Expanded(
-                          child: Text(
-                            "Address : ${link?.address}",
-                            style: Theme.of(context).textTheme.bodyMedium,
-                          ),
-                        ),
-                        const SizedBox(
-                          width: 5,
-                        ),
-                        Expanded(
-                          child: Text(
-                            "User name : ${link?.user?.name}",
-                            style: Theme.of(context).textTheme.bodyMedium,
-                          ),
-                        ),
-                      ],
-                    ),
-                  );
-                },
+                        );
+                      },
+                    );
+                  },
+                ),
               ),
             ],
           ),

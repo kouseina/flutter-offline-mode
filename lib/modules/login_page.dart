@@ -1,10 +1,10 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_realm/graphql/queries.dart';
-import 'package:flutter_realm/modules/home_page.dart';
-import 'package:flutter_realm/storage/shared_pref.dart';
-import 'package:flutter_realm/utils/dialog_utils.dart';
-import 'package:flutter_realm/widgets/main_textfield_widget.dart';
+import 'package:flutter_offline_mode/graphql/queries.dart';
+import 'package:flutter_offline_mode/modules/home_page.dart';
+import 'package:flutter_offline_mode/storage/shared_pref.dart';
+import 'package:flutter_offline_mode/utils/dialog_utils.dart';
+import 'package:flutter_offline_mode/widgets/main_textfield_widget.dart';
 import 'package:graphql/client.dart';
 
 class LoginPage extends StatefulWidget {
@@ -33,6 +33,10 @@ class _LoginPageState extends State<LoginPage> {
 
     userNameController = TextEditingController();
     passwordController = TextEditingController();
+
+    WidgetsBinding.instance.addPostFrameCallback((timeStamp) {
+      checkIsLoggedin();
+    });
   }
 
   @override
@@ -41,6 +45,16 @@ class _LoginPageState extends State<LoginPage> {
 
     userNameController.dispose();
     passwordController.dispose();
+  }
+
+  void checkIsLoggedin() {
+    if (SharedPref().token != null) {
+      Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(
+            builder: (context) => const HomePage(),
+          ));
+    }
   }
 
   void onLogin() async {
