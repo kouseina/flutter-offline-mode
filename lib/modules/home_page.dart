@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_offline_mode/graphql/queries.dart';
 import 'package:flutter_offline_mode/widgets/main_textfield_widget.dart';
@@ -17,8 +18,6 @@ class _HomePageState extends State<HomePage> {
   late TextEditingController titleController;
   late TextEditingController addressController;
 
-  GraphQLClient? client;
-
   @override
   void initState() {
     super.initState();
@@ -33,6 +32,18 @@ class _HomePageState extends State<HomePage> {
 
     titleController.dispose();
     addressController.dispose();
+  }
+
+  void onAddLink(
+      MultiSourceResult<Object?> Function(Map<String, dynamic>,
+              {Object? optimisticResult})
+          runMutation) {
+    if (!_formKey.currentState!.validate()) return;
+
+    runMutation({
+      'title': titleController.text,
+      'address': addressController.text,
+    });
   }
 
   @override
@@ -68,12 +79,35 @@ class _HomePageState extends State<HomePage> {
                     const SizedBox(
                       height: 16,
                     ),
-                    SizedBox(
-                      width: double.infinity,
-                      child: ElevatedButton(
-                        onPressed: () {},
-                        child: const Text("Add"),
+                    Mutation(
+                      options: MutationOptions(
+                        document: gql(Queries
+                            .createLink), // this is the mutation string you just created
+                        // you can update the cache based on results
+                        update: (cache, result) {},
+                        // or do something with the result.data on completion
+                        onCompleted: (resultData) {
+                          if (resultData != null) {
+                            titleController.clear();
+                            addressController.clear();
+                          }
+
+                          if (kDebugMode) {
+                            print("result data create link : $resultData");
+                          }
+                        },
                       ),
+                      builder: (runMutation, result) {
+                        return SizedBox(
+                          width: double.infinity,
+                          child: ElevatedButton(
+                            onPressed: () {
+                              onAddLink(runMutation);
+                            },
+                            child: const Text("Add"),
+                          ),
+                        );
+                      },
                     ),
                   ],
                 ),
@@ -84,6 +118,7 @@ class _HomePageState extends State<HomePage> {
               Expanded(
                 child: Query(
                   options: QueryOptions(
+                    fetchPolicy: FetchPolicy.cacheAndNetwork,
                     document: gql(
                       Queries.fetchAllLinks,
                     ), // this is the query string you just created
@@ -104,54 +139,75 @@ class _HomePageState extends State<HomePage> {
                       return const Text('No Links');
                     }
 
-                    return ListView.builder(
-                      // shrinkWrap: true,
-                      // physics: const NeverScrollableScrollPhysics(),
-                      itemCount: links.length,
-                      itemBuilder: (context, index) {
-                        final link = models.Link.fromJson(links[index]);
+                    return Column(
+                      children: [
+                        ElevatedButton(
+                          onPressed: refetch,
+                          child: Text("Refetch"),
+                        ),
+                        const SizedBox(
+                          height: 16,
+                        ),
+                        Expanded(
+                          child: ListView.builder(
+                            // shrinkWrap: true,
+                            physics: const AlwaysScrollableScrollPhysics(),
+                            itemCount: links.length,
+                            itemBuilder: (context, index) {
+                              final link = models.Link.fromJson(links[index]);
 
-                        return Padding(
-                          padding: const EdgeInsets.only(bottom: 16),
-                          child: Row(
-                            children: [
-                              Expanded(
-                                child: Text(
-                                  "Id : ${link.id}",
-                                  style: Theme.of(context).textTheme.bodyMedium,
+                              return Padding(
+                                padding: const EdgeInsets.only(bottom: 16),
+                                child: Row(
+                                  children: [
+                                    Expanded(
+                                      child: Text(
+                                        "Id : ${link.id}",
+                                        style: Theme.of(context)
+                                            .textTheme
+                                            .bodyMedium,
+                                      ),
+                                    ),
+                                    const SizedBox(
+                                      width: 5,
+                                    ),
+                                    Expanded(
+                                      child: Text(
+                                        "Title : ${link.title}",
+                                        style: Theme.of(context)
+                                            .textTheme
+                                            .bodyMedium,
+                                      ),
+                                    ),
+                                    const SizedBox(
+                                      width: 5,
+                                    ),
+                                    Expanded(
+                                      child: Text(
+                                        "Address : ${link.address}",
+                                        style: Theme.of(context)
+                                            .textTheme
+                                            .bodyMedium,
+                                      ),
+                                    ),
+                                    const SizedBox(
+                                      width: 5,
+                                    ),
+                                    Expanded(
+                                      child: Text(
+                                        "User name : ${link.user?.name}",
+                                        style: Theme.of(context)
+                                            .textTheme
+                                            .bodyMedium,
+                                      ),
+                                    ),
+                                  ],
                                 ),
-                              ),
-                              const SizedBox(
-                                width: 5,
-                              ),
-                              Expanded(
-                                child: Text(
-                                  "Title : ${link.title}",
-                                  style: Theme.of(context).textTheme.bodyMedium,
-                                ),
-                              ),
-                              const SizedBox(
-                                width: 5,
-                              ),
-                              Expanded(
-                                child: Text(
-                                  "Address : ${link.address}",
-                                  style: Theme.of(context).textTheme.bodyMedium,
-                                ),
-                              ),
-                              const SizedBox(
-                                width: 5,
-                              ),
-                              Expanded(
-                                child: Text(
-                                  "User name : ${link.user?.name}",
-                                  style: Theme.of(context).textTheme.bodyMedium,
-                                ),
-                              ),
-                            ],
+                              );
+                            },
                           ),
-                        );
-                      },
+                        ),
+                      ],
                     );
                   },
                 ),
