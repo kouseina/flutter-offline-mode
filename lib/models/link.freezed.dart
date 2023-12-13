@@ -20,9 +20,14 @@ Link _$LinkFromJson(Map<String, dynamic> json) {
 
 /// @nodoc
 mixin _$Link {
+  @JsonKey(name: 'id', required: true, disallowNullValue: true)
+  @HiveField(0)
   String? get id => throw _privateConstructorUsedError;
+  @HiveField(1)
   String? get title => throw _privateConstructorUsedError;
+  @HiveField(2)
   String? get address => throw _privateConstructorUsedError;
+  @HiveField(3)
   User? get user => throw _privateConstructorUsedError;
 
   Map<String, dynamic> toJson() => throw _privateConstructorUsedError;
@@ -35,7 +40,13 @@ abstract class $LinkCopyWith<$Res> {
   factory $LinkCopyWith(Link value, $Res Function(Link) then) =
       _$LinkCopyWithImpl<$Res, Link>;
   @useResult
-  $Res call({String? id, String? title, String? address, User? user});
+  $Res call(
+      {@JsonKey(name: 'id', required: true, disallowNullValue: true)
+      @HiveField(0)
+      String? id,
+      @HiveField(1) String? title,
+      @HiveField(2) String? address,
+      @HiveField(3) User? user});
 
   $UserCopyWith<$Res>? get user;
 }
@@ -98,7 +109,13 @@ abstract class _$$LinkImplCopyWith<$Res> implements $LinkCopyWith<$Res> {
       __$$LinkImplCopyWithImpl<$Res>;
   @override
   @useResult
-  $Res call({String? id, String? title, String? address, User? user});
+  $Res call(
+      {@JsonKey(name: 'id', required: true, disallowNullValue: true)
+      @HiveField(0)
+      String? id,
+      @HiveField(1) String? title,
+      @HiveField(2) String? address,
+      @HiveField(3) User? user});
 
   @override
   $UserCopyWith<$Res>? get user;
@@ -142,19 +159,31 @@ class __$$LinkImplCopyWithImpl<$Res>
 
 /// @nodoc
 @JsonSerializable()
+@HiveType(typeId: 0, adapterName: 'LinkAdapter')
 class _$LinkImpl with DiagnosticableTreeMixin implements _Link {
-  const _$LinkImpl({this.id, this.title, this.address, this.user});
+  const _$LinkImpl(
+      {@JsonKey(name: 'id', required: true, disallowNullValue: true)
+      @HiveField(0)
+      this.id,
+      @HiveField(1) this.title,
+      @HiveField(2) this.address,
+      @HiveField(3) this.user});
 
   factory _$LinkImpl.fromJson(Map<String, dynamic> json) =>
       _$$LinkImplFromJson(json);
 
   @override
+  @JsonKey(name: 'id', required: true, disallowNullValue: true)
+  @HiveField(0)
   final String? id;
   @override
+  @HiveField(1)
   final String? title;
   @override
+  @HiveField(2)
   final String? address;
   @override
+  @HiveField(3)
   final User? user;
 
   @override
@@ -204,20 +233,27 @@ class _$LinkImpl with DiagnosticableTreeMixin implements _Link {
 
 abstract class _Link implements Link {
   const factory _Link(
-      {final String? id,
-      final String? title,
-      final String? address,
-      final User? user}) = _$LinkImpl;
+      {@JsonKey(name: 'id', required: true, disallowNullValue: true)
+      @HiveField(0)
+      final String? id,
+      @HiveField(1) final String? title,
+      @HiveField(2) final String? address,
+      @HiveField(3) final User? user}) = _$LinkImpl;
 
   factory _Link.fromJson(Map<String, dynamic> json) = _$LinkImpl.fromJson;
 
   @override
+  @JsonKey(name: 'id', required: true, disallowNullValue: true)
+  @HiveField(0)
   String? get id;
   @override
+  @HiveField(1)
   String? get title;
   @override
+  @HiveField(2)
   String? get address;
   @override
+  @HiveField(3)
   User? get user;
   @override
   @JsonKey(ignore: true)

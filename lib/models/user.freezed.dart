@@ -20,7 +20,9 @@ User _$UserFromJson(Map<String, dynamic> json) {
 
 /// @nodoc
 mixin _$User {
+  @HiveField(0)
   String? get id => throw _privateConstructorUsedError;
+  @HiveField(1)
   String? get name => throw _privateConstructorUsedError;
 
   Map<String, dynamic> toJson() => throw _privateConstructorUsedError;
@@ -33,7 +35,7 @@ abstract class $UserCopyWith<$Res> {
   factory $UserCopyWith(User value, $Res Function(User) then) =
       _$UserCopyWithImpl<$Res, User>;
   @useResult
-  $Res call({String? id, String? name});
+  $Res call({@HiveField(0) String? id, @HiveField(1) String? name});
 }
 
 /// @nodoc
@@ -72,7 +74,7 @@ abstract class _$$UserImplCopyWith<$Res> implements $UserCopyWith<$Res> {
       __$$UserImplCopyWithImpl<$Res>;
   @override
   @useResult
-  $Res call({String? id, String? name});
+  $Res call({@HiveField(0) String? id, @HiveField(1) String? name});
 }
 
 /// @nodoc
@@ -103,15 +105,18 @@ class __$$UserImplCopyWithImpl<$Res>
 
 /// @nodoc
 @JsonSerializable()
+@HiveType(typeId: 1, adapterName: 'UserAdapter')
 class _$UserImpl with DiagnosticableTreeMixin implements _User {
-  const _$UserImpl({this.id, this.name});
+  const _$UserImpl({@HiveField(0) this.id, @HiveField(1) this.name});
 
   factory _$UserImpl.fromJson(Map<String, dynamic> json) =>
       _$$UserImplFromJson(json);
 
   @override
+  @HiveField(0)
   final String? id;
   @override
+  @HiveField(1)
   final String? name;
 
   @override
@@ -156,13 +161,17 @@ class _$UserImpl with DiagnosticableTreeMixin implements _User {
 }
 
 abstract class _User implements User {
-  const factory _User({final String? id, final String? name}) = _$UserImpl;
+  const factory _User(
+      {@HiveField(0) final String? id,
+      @HiveField(1) final String? name}) = _$UserImpl;
 
   factory _User.fromJson(Map<String, dynamic> json) = _$UserImpl.fromJson;
 
   @override
+  @HiveField(0)
   String? get id;
   @override
+  @HiveField(1)
   String? get name;
   @override
   @JsonKey(ignore: true)

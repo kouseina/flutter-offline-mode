@@ -1,11 +1,14 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_offline_mode/graphql/queries.dart';
+import 'package:flutter_offline_mode/models/link.dart';
+import 'package:flutter_offline_mode/models/user.dart';
 import 'package:flutter_offline_mode/storage/shared_pref.dart';
 import 'package:flutter_offline_mode/utils/dialog_utils.dart';
 import 'package:flutter_offline_mode/widgets/main_textfield_widget.dart';
 import 'package:graphql_flutter/graphql_flutter.dart';
 import 'package:flutter_offline_mode/models/models_export.dart' as models;
+import 'package:hive/hive.dart';
 import 'package:path_provider/path_provider.dart';
 
 class HomePage extends StatefulWidget {
@@ -18,6 +21,7 @@ class HomePage extends StatefulWidget {
 class _HomePageState extends State<HomePage> {
   final _formKey = GlobalKey<FormState>();
   final _loadKey = GlobalKey<State>();
+  Box? linksBox;
 
   late TextEditingController titleController;
   late TextEditingController addressController;
@@ -33,7 +37,7 @@ class _HomePageState extends State<HomePage> {
     getToken: () async => SharedPref().token,
   );
 
-  static Link link = _authLink.concat(_httpLink);
+  static final link = _authLink.concat(_httpLink);
 
   Future<GraphQLClient> getClient() async {
     final dir = await getApplicationDocumentsDirectory();
@@ -51,6 +55,8 @@ class _HomePageState extends State<HomePage> {
   void initState() {
     super.initState();
 
+    openBox();
+
     titleController = TextEditingController();
     addressController = TextEditingController();
 
@@ -63,6 +69,15 @@ class _HomePageState extends State<HomePage> {
 
     titleController.dispose();
     addressController.dispose();
+  }
+
+  void openBox() async {
+    final dir = await getApplicationDocumentsDirectory();
+    Hive.registerAdapter(LinkAdapter());
+    Hive.registerAdapter(UserAdapter());
+    await Hive.openBox("links", path: '${dir.path}/data/links/');
+
+    linksBox = Hive.box('links');
   }
 
   void getAllLinks() async {
@@ -81,12 +96,18 @@ class _HomePageState extends State<HomePage> {
       }
     }
 
+    List<models.Link> mappedList = (result.data?["links"] as List)
+        .map((e) => models.Link.fromJson(e))
+        .toList();
+
+    linksBox?.put('data', mappedList);
+
     setState(() {
       isLinkLoading = false;
-      links = (result.data?["links"] as List)
-          .map((e) => models.Link.fromJson(e))
-          .toList();
+      links = mappedList;
     });
+
+    print("links box : ${linksBox?.get('data')}");
   }
 
   void onAddLink() async {
