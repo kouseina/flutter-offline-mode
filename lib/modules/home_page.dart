@@ -126,24 +126,24 @@ class _HomePageState extends State<HomePage> {
                   ),
                   builder: (result, {fetchMore, refetch}) {
                     if (result.hasException) {
-                      return Text(result.exception.toString());
+                      return Center(child: Text(result.exception.toString()));
                     }
 
                     if (result.isLoading) {
-                      return const Text('Loading');
+                      return const Center(child: Text('Loading'));
                     }
 
                     final links = result.data?["links"];
 
                     if (links == null) {
-                      return const Text('No Links');
+                      return const Center(child: Text('No Links'));
                     }
 
                     return Column(
                       children: [
                         ElevatedButton(
                           onPressed: refetch,
-                          child: Text("Refetch"),
+                          child: const Text("Refetch"),
                         ),
                         const SizedBox(
                           height: 16,
