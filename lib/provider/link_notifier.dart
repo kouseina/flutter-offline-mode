@@ -202,18 +202,19 @@ class LinkNotifier extends ChangeNotifier {
       // print("server : $server");
       // print("diff : $diff");
 
+      DialogUtils.showLoadingDialog(context, loadKey);
+
       int index = 0;
       for (var element in diff) {
-        DialogUtils.showLoadingDialog(context, loadKey);
-
         // print("is add to server $index");
 
         await addLinkToServer(
             title: element.title ?? "", address: element.address ?? "");
         index++;
-
-        Navigator.of(loadKey.currentContext!, rootNavigator: true).pop();
       }
+
+      Navigator.of(loadKey.currentContext ?? context, rootNavigator: true)
+          .pop();
 
       if (diff.isNotEmpty && index >= diff.length - 1) {
         _isAppSync = false;
