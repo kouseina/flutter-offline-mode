@@ -1,15 +1,13 @@
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_offline_mode/graphql/queries.dart';
+import 'package:flutter_offline/flutter_offline.dart';
 import 'package:flutter_offline_mode/models/link.dart';
 import 'package:flutter_offline_mode/models/user.dart';
-import 'package:flutter_offline_mode/storage/shared_pref.dart';
-import 'package:flutter_offline_mode/utils/dialog_utils.dart';
+import 'package:flutter_offline_mode/provider/link_notifier.dart';
 import 'package:flutter_offline_mode/widgets/main_textfield_widget.dart';
-import 'package:graphql_flutter/graphql_flutter.dart';
 import 'package:flutter_offline_mode/models/models_export.dart' as models;
 import 'package:hive/hive.dart';
 import 'package:path_provider/path_provider.dart';
+import 'package:provider/provider.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -26,41 +24,24 @@ class _HomePageState extends State<HomePage> {
   late TextEditingController titleController;
   late TextEditingController addressController;
 
-  bool isLinkLoading = false;
-  List<models.Link> links = [];
-
-  static final _httpLink = HttpLink(
-    'http://diyo-api-load-balancer-576848411.ap-southeast-1.elb.amazonaws.com:8080/query',
-  );
-
-  static final _authLink = AuthLink(
-    getToken: () async => SharedPref().token,
-  );
-
-  static final link = _authLink.concat(_httpLink);
-
-  Future<GraphQLClient> getClient() async {
-    final dir = await getApplicationDocumentsDirectory();
-
-    /// initialize Hive and wrap the default box in a HiveStore
-    final store = await HiveStore.open(path: '${dir.path}/cache/');
-    return GraphQLClient(
-      /// pass the store to the cache for persistence
-      cache: GraphQLCache(store: store),
-      link: link,
-    );
-  }
+  bool connected = false;
 
   @override
   void initState() {
     super.initState();
 
-    openBox();
-
     titleController = TextEditingController();
     addressController = TextEditingController();
 
-    getAllLinks();
+    WidgetsBinding.instance.addPostFrameCallback((timeStamp) async {
+      await openBox();
+
+      if (!mounted) return;
+      Provider.of<LinkNotifier>(context, listen: false).getAllLinks(
+        connected: connected,
+        linksBox: linksBox,
+      );
+    });
   }
 
   @override
@@ -71,7 +52,7 @@ class _HomePageState extends State<HomePage> {
     addressController.dispose();
   }
 
-  void openBox() async {
+  Future<void> openBox() async {
     final dir = await getApplicationDocumentsDirectory();
     Hive.registerAdapter(LinkAdapter());
     Hive.registerAdapter(UserAdapter());
@@ -80,177 +61,177 @@ class _HomePageState extends State<HomePage> {
     linksBox = Hive.box('links');
   }
 
-  void getAllLinks() async {
-    setState(() => isLinkLoading = true);
-
-    final QueryOptions options = QueryOptions(
-      fetchPolicy: FetchPolicy.cacheAndNetwork,
-      document: gql(Queries.fetchAllLinks),
-    );
-
-    final QueryResult result = await (await getClient()).query(options);
-
-    if (result.hasException) {
-      if (kDebugMode) {
-        print(result.exception.toString());
-      }
-    }
-
-    List<models.Link> mappedList = (result.data?["links"] as List)
-        .map((e) => models.Link.fromJson(e))
-        .toList();
-
-    linksBox?.put('data', mappedList);
-
-    setState(() {
-      isLinkLoading = false;
-      links = mappedList;
-    });
-
-    print("links box : ${linksBox?.get('data')}");
-  }
-
-  void onAddLink() async {
-    if (!_formKey.currentState!.validate()) return;
-
-    DialogUtils.showLoadingDialog(context, _loadKey);
-
-    final MutationOptions options = MutationOptions(
-      document: gql(Queries.createLink),
-      variables: <String, dynamic>{
-        'title': titleController.text,
-        'address': addressController.text,
-      },
-    );
-
-    final QueryResult result = await (await getClient()).mutate(options);
-
-    Navigator.of(_loadKey.currentContext!, rootNavigator: true).pop();
-
-    if (result.hasException) {
-      if (kDebugMode) {
-        print(result.exception.toString());
-      }
-    }
-
-    if (result.data != null) {
-      titleController.clear();
-      addressController.clear();
-      getAllLinks();
-    }
-  }
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
         title: const Text("Links"),
       ),
-      body: SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 20),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
+      body: OfflineBuilder(
+        connectivityBuilder: (
+          BuildContext context,
+          ConnectivityResult connectivity,
+          Widget child,
+        ) {
+          print("offline builder is called");
+
+          connected = connectivity != ConnectivityResult.none;
+
+          Provider.of<LinkNotifier>(context, listen: false)
+              .compareLinkLocalAndServer(
+            connected: connected,
+            linksBox: linksBox,
+            context: context,
+            loadKey: _loadKey,
+          );
+
+          return Stack(
+            fit: StackFit.expand,
             children: [
-              Form(
-                key: _formKey,
-                child: Column(
-                  children: [
-                    const SizedBox(
-                      height: 35,
-                    ),
-                    MainTextFieldWidget(
-                      controller: titleController,
-                      labelText: "Title",
-                    ),
-                    const SizedBox(
-                      height: 16,
-                    ),
-                    MainTextFieldWidget(
-                      controller: addressController,
-                      labelText: "Address",
-                    ),
-                    const SizedBox(
-                      height: 16,
-                    ),
-                    SizedBox(
-                      width: double.infinity,
-                      child: ElevatedButton(
-                        onPressed: () {
-                          onAddLink();
-                        },
-                        child: const Text("Add"),
-                      ),
-                    ),
-                  ],
+              Positioned(
+                height: 24.0,
+                left: 0.0,
+                right: 0.0,
+                child: Container(
+                  color:
+                      connected ? Colors.green.shade500 : Colors.red.shade400,
+                  child: Center(
+                    child: Text(connected ? 'ONLINE' : 'OFFLINE'),
+                  ),
                 ),
               ),
-              const SizedBox(
-                height: 20,
-              ),
-              Expanded(
-                child: Builder(builder: (context) {
-                  if (isLinkLoading) {
-                    return const Center(child: CircularProgressIndicator());
-                  }
-
-                  return RefreshIndicator(
-                    onRefresh: () async {
-                      getAllLinks();
-                    },
-                    child: ListView.builder(
-                      // shrinkWrap: true,
-                      physics: const AlwaysScrollableScrollPhysics(),
-                      itemCount: links.length,
-                      itemBuilder: (context, index) {
-                        final link = links[index];
-
-                        return Padding(
-                          padding: const EdgeInsets.only(bottom: 16),
-                          child: Row(
-                            children: [
-                              Expanded(
-                                child: Text(
-                                  "Id : ${link.id}",
-                                  style: Theme.of(context).textTheme.bodyMedium,
-                                ),
-                              ),
-                              const SizedBox(
-                                width: 5,
-                              ),
-                              Expanded(
-                                child: Text(
-                                  "Title : ${link.title}",
-                                  style: Theme.of(context).textTheme.bodyMedium,
-                                ),
-                              ),
-                              const SizedBox(
-                                width: 5,
-                              ),
-                              Expanded(
-                                child: Text(
-                                  "Address : ${link.address}",
-                                  style: Theme.of(context).textTheme.bodyMedium,
-                                ),
-                              ),
-                              const SizedBox(
-                                width: 5,
-                              ),
-                              Expanded(
-                                child: Text(
-                                  "User name : ${link.user?.name}",
-                                  style: Theme.of(context).textTheme.bodyMedium,
-                                ),
-                              ),
-                            ],
-                          ),
-                        );
-                      },
-                    ),
-                  );
-                }),
-              ),
+              child,
             ],
+          );
+        },
+        child: SafeArea(
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 20),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Form(
+                  key: _formKey,
+                  child: Column(
+                    children: [
+                      const SizedBox(
+                        height: 50,
+                      ),
+                      MainTextFieldWidget(
+                        controller: titleController,
+                        labelText: "Title",
+                      ),
+                      const SizedBox(
+                        height: 16,
+                      ),
+                      MainTextFieldWidget(
+                        controller: addressController,
+                        labelText: "Address",
+                      ),
+                      const SizedBox(
+                        height: 16,
+                      ),
+                      SizedBox(
+                        width: double.infinity,
+                        child: ElevatedButton(
+                          onPressed: () {
+                            Provider.of<LinkNotifier>(context, listen: false)
+                                .onAddLink(
+                              connected: connected,
+                              context: context,
+                              loadKey: _loadKey,
+                              formKey: _formKey,
+                              linksBox: linksBox,
+                              title: titleController,
+                              address: addressController,
+                            );
+                          },
+                          child: const Text("Add"),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(
+                  height: 20,
+                ),
+                Expanded(
+                  child: Consumer<LinkNotifier>(
+                    builder: (context, notifier, child) {
+                      if (notifier.isLinkLoading) {
+                        return const Center(child: CircularProgressIndicator());
+                      }
+
+                      return RefreshIndicator(
+                        onRefresh: () async {
+                          notifier.getAllLinks(
+                            connected: connected,
+                            linksBox: linksBox,
+                          );
+                        },
+                        child: ListView.builder(
+                          // shrinkWrap: true,
+                          physics: const AlwaysScrollableScrollPhysics(),
+                          itemCount: notifier.links.length,
+                          itemBuilder: (context, index) {
+                            final link = notifier.links[index];
+
+                            return Padding(
+                              padding: const EdgeInsets.only(bottom: 16),
+                              child: Row(
+                                children: [
+                                  Expanded(
+                                    child: Text(
+                                      "Id : ${link.id}",
+                                      style: Theme.of(context)
+                                          .textTheme
+                                          .bodyMedium,
+                                    ),
+                                  ),
+                                  const SizedBox(
+                                    width: 5,
+                                  ),
+                                  Expanded(
+                                    child: Text(
+                                      "Title : ${link.title}",
+                                      style: Theme.of(context)
+                                          .textTheme
+                                          .bodyMedium,
+                                    ),
+                                  ),
+                                  const SizedBox(
+                                    width: 5,
+                                  ),
+                                  Expanded(
+                                    child: Text(
+                                      "Address : ${link.address}",
+                                      style: Theme.of(context)
+                                          .textTheme
+                                          .bodyMedium,
+                                    ),
+                                  ),
+                                  const SizedBox(
+                                    width: 5,
+                                  ),
+                                  Expanded(
+                                    child: Text(
+                                      "User name : ${link.user?.name}",
+                                      style: Theme.of(context)
+                                          .textTheme
+                                          .bodyMedium,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            );
+                          },
+                        ),
+                      );
+                    },
+                  ),
+                ),
+              ],
+            ),
           ),
         ),
       ),

@@ -14,9 +14,7 @@ part 'link.g.dart';
 class Link with _$Link {
   @HiveType(typeId: 0, adapterName: 'LinkAdapter')
   const factory Link({
-    @JsonKey(name: 'id', required: true, disallowNullValue: true)
-    @HiveField(0)
-    String? id,
+    @HiveField(0) String? id,
     @HiveField(1) String? title,
     @HiveField(2) String? address,
     @HiveField(3) User? user,

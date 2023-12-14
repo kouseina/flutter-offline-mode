@@ -20,7 +20,6 @@ Link _$LinkFromJson(Map<String, dynamic> json) {
 
 /// @nodoc
 mixin _$Link {
-  @JsonKey(name: 'id', required: true, disallowNullValue: true)
   @HiveField(0)
   String? get id => throw _privateConstructorUsedError;
   @HiveField(1)
@@ -41,9 +40,7 @@ abstract class $LinkCopyWith<$Res> {
       _$LinkCopyWithImpl<$Res, Link>;
   @useResult
   $Res call(
-      {@JsonKey(name: 'id', required: true, disallowNullValue: true)
-      @HiveField(0)
-      String? id,
+      {@HiveField(0) String? id,
       @HiveField(1) String? title,
       @HiveField(2) String? address,
       @HiveField(3) User? user});
@@ -110,9 +107,7 @@ abstract class _$$LinkImplCopyWith<$Res> implements $LinkCopyWith<$Res> {
   @override
   @useResult
   $Res call(
-      {@JsonKey(name: 'id', required: true, disallowNullValue: true)
-      @HiveField(0)
-      String? id,
+      {@HiveField(0) String? id,
       @HiveField(1) String? title,
       @HiveField(2) String? address,
       @HiveField(3) User? user});
@@ -162,9 +157,7 @@ class __$$LinkImplCopyWithImpl<$Res>
 @HiveType(typeId: 0, adapterName: 'LinkAdapter')
 class _$LinkImpl with DiagnosticableTreeMixin implements _Link {
   const _$LinkImpl(
-      {@JsonKey(name: 'id', required: true, disallowNullValue: true)
-      @HiveField(0)
-      this.id,
+      {@HiveField(0) this.id,
       @HiveField(1) this.title,
       @HiveField(2) this.address,
       @HiveField(3) this.user});
@@ -173,7 +166,6 @@ class _$LinkImpl with DiagnosticableTreeMixin implements _Link {
       _$$LinkImplFromJson(json);
 
   @override
-  @JsonKey(name: 'id', required: true, disallowNullValue: true)
   @HiveField(0)
   final String? id;
   @override
@@ -233,9 +225,7 @@ class _$LinkImpl with DiagnosticableTreeMixin implements _Link {
 
 abstract class _Link implements Link {
   const factory _Link(
-      {@JsonKey(name: 'id', required: true, disallowNullValue: true)
-      @HiveField(0)
-      final String? id,
+      {@HiveField(0) final String? id,
       @HiveField(1) final String? title,
       @HiveField(2) final String? address,
       @HiveField(3) final User? user}) = _$LinkImpl;
@@ -243,7 +233,6 @@ abstract class _Link implements Link {
   factory _Link.fromJson(Map<String, dynamic> json) = _$LinkImpl.fromJson;
 
   @override
-  @JsonKey(name: 'id', required: true, disallowNullValue: true)
   @HiveField(0)
   String? get id;
   @override

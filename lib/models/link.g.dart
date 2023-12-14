@@ -53,34 +53,19 @@ class LinkAdapter extends TypeAdapter<_$LinkImpl> {
 // JsonSerializableGenerator
 // **************************************************************************
 
-_$LinkImpl _$$LinkImplFromJson(Map<String, dynamic> json) {
-  $checkKeys(
-    json,
-    requiredKeys: const ['id'],
-    disallowNullValues: const ['id'],
-  );
-  return _$LinkImpl(
-    id: json['id'] as String?,
-    title: json['title'] as String?,
-    address: json['address'] as String?,
-    user: json['user'] == null
-        ? null
-        : User.fromJson(json['user'] as Map<String, dynamic>),
-  );
-}
+_$LinkImpl _$$LinkImplFromJson(Map<String, dynamic> json) => _$LinkImpl(
+      id: json['id'] as String?,
+      title: json['title'] as String?,
+      address: json['address'] as String?,
+      user: json['user'] == null
+          ? null
+          : User.fromJson(json['user'] as Map<String, dynamic>),
+    );
 
-Map<String, dynamic> _$$LinkImplToJson(_$LinkImpl instance) {
-  final val = <String, dynamic>{};
-
-  void writeNotNull(String key, dynamic value) {
-    if (value != null) {
-      val[key] = value;
-    }
-  }
-
-  writeNotNull('id', instance.id);
-  val['title'] = instance.title;
-  val['address'] = instance.address;
-  val['user'] = instance.user;
-  return val;
-}
+Map<String, dynamic> _$$LinkImplToJson(_$LinkImpl instance) =>
+    <String, dynamic>{
+      'id': instance.id,
+      'title': instance.title,
+      'address': instance.address,
+      'user': instance.user,
+    };
